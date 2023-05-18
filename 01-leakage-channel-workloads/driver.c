@@ -28,7 +28,7 @@ static __attribute__((noinline)) int monitor(void *in)
 	struct args_t *arg = (struct args_t *)in;
 
 	// Pin monitor to a single CPU
-	pin_cpu(attacker_core_ID);
+	//pin_cpu(attacker_core_ID);
 
 	// Set filename
 	char energy_filename[64];

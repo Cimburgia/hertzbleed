@@ -16,7 +16,7 @@ uint64_t get_time(void)
 	return cycles;
 }
 
-void pin_cpu(size_t core_ID)
+/* void pin_cpu(size_t core_ID)
 {
 	cpu_set_t set;
 	CPU_ZERO(&set);
@@ -25,4 +25,4 @@ void pin_cpu(size_t core_ID)
 		printf("Unable to Set Affinity\n");
 		exit(EXIT_FAILURE);
 	}
-}
+} */
