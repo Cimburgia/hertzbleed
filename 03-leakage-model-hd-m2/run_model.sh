@@ -8,7 +8,7 @@ TOTAL_LOGICAL_CORES=`sysctl -n hw.logicalcpu `
 
 # Setup
 samples=10000	# 10 seconds
-outer=30
+outer=1
 num_thread=$TOTAL_LOGICAL_CORES
 date=`date +"%m%d-%H%M"`
 
@@ -26,6 +26,6 @@ for selector in `seq 0 16`; do
 	echo $selector >> input.txt
 done
 
-sudo ./bin/driver-input ${num_thread} ${samples} ${outer}
-cp -r out data/out-input-${date}
+sudo ./bin/driver ${num_thread} ${samples} ${outer}
+cp -r out data/out-${date}
 cd ../scripts

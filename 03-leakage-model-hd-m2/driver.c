@@ -13,6 +13,47 @@ struct args_t {
 	int selector;
 };
 
+static __attribute__((noinline)) int victim(void *varg){
+	struct args_t *arg = varg;
+	uint64_t my_uint64 = 0x0000FFFFFFFF0000;
+	uint64_t count = (uint64_t)arg->selector;
+
+	// shift %1 (my_unit64) left by %0 (count) and store in %register
+	asm volatile(
+		".align 64\t\n"
+		"loop:\n\t"
+		
+		"lsl %x1, %1, %0\n\t"
+		"lsl %x2, %1, %0\n\t"
+		"lsr %x3, %1, %0\n\t"
+		"lsr %x4, %1, %0\n\t"
+		"lsl %x5, %1, %0\n\t"
+		"lsl %x6, %1, %0\n\t"
+		"lsr %x7, %1, %0\n\t"
+		"lsr %x8, %1, %0\n\t"
+		"lsl %x9, %1, %0\n\t"
+		"lsl %x10, %1, %0\n\t"
+
+		"lsr %x1, %1, %0\n\t" 
+		"lsr %x2, %1, %0\n\t"
+		"lsl %x3, %1, %0\n\t"
+		"lsl %x4, %1, %0\n\t"
+		"lsr %x5, %1, %0\n\t"
+		"lsr %x6, %1, %0\n\t"
+		"lsl %x7, %1, %0\n\t"
+		"lsl %x8, %1, %0\n\t"
+		"lsr %x9, %1, %0\n\t"
+		"lsr %x10, %1, %0\n\t"
+
+		"jmp loop\n\t"
+		:
+		: "r"(count), "r"(my_uint64)
+		: "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10");
+
+	return 0;
+
+}
+
 int main(int argc, char *argv[])
 {
 	// Check arguments
@@ -63,10 +104,7 @@ int main(int argc, char *argv[])
 
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
-	set_frequency_units(attacker_core_ID);
-	frequency_msr_raw(attacker_core_ID);
-	set_rapl_units(attacker_core_ID);
-	rapl_msr(attacker_core_ID, PP0_ENERGY);
+	// Start code to measure CPU
 
 	// Allocate memory for the threads
 	char *tstacks = mmap(NULL, (ntasks + 1) * STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

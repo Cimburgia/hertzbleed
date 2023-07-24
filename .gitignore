@@ -96,3 +96,5 @@ sike_client
 bit_recovered.txt
 
 circl/
+
+.vscode/
