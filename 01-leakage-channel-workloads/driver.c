@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
 	setpriority(PRIO_PROCESS, 0, -20);
 
 	// Prepare up monitor/attacker
+	//TODO: Check these for macos compatability
 	attacker_core_ID = 0;
 	set_frequency_units(attacker_core_ID);
 	frequency_msr_raw(attacker_core_ID);
