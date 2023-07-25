@@ -2,6 +2,8 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 
+#include "../util/util.h"
+
 volatile static int attacker_core_ID;
 
 #define TIME_BETWEEN_MEASUREMENTS 1000000L // 1 millisecond
@@ -13,7 +15,7 @@ struct args_t {
 	int selector;
 };
 
-static __attribute__((noinline)) int victim(void *varg){
+static __attribute__((noinline)) void *victim(void *varg){
 	struct args_t *arg = varg;
 	uint64_t my_uint64 = 0x0000FFFFFFFF0000;
 	uint64_t count = (uint64_t)arg->selector;
@@ -23,43 +25,74 @@ static __attribute__((noinline)) int victim(void *varg){
 		".align 64\t\n"
 		"loop:\n\t"
 		
-		"lsl %x1, %1, %0\n\t"
-		"lsl %x2, %1, %0\n\t"
-		"lsr %x3, %1, %0\n\t"
-		"lsr %x4, %1, %0\n\t"
-		"lsl %x5, %1, %0\n\t"
-		"lsl %x6, %1, %0\n\t"
-		"lsr %x7, %1, %0\n\t"
-		"lsr %x8, %1, %0\n\t"
-		"lsl %x9, %1, %0\n\t"
-		"lsl %x10, %1, %0\n\t"
+		"lsl %%x1, %1, %0\n\t"
+		"lsl %%x2, %1, %0\n\t"
+		"lsr %%x3, %1, %0\n\t"
+		"lsr %%x4, %1, %0\n\t"
+		"lsl %%x5, %1, %0\n\t"
+		"lsl %%x6, %1, %0\n\t"
+		"lsr %%x7, %1, %0\n\t"
+		"lsr %%x8, %1, %0\n\t"
+		"lsl %%x9, %1, %0\n\t"
+		"lsl %%x10, %1, %0\n\t"
 
-		"lsr %x1, %1, %0\n\t" 
-		"lsr %x2, %1, %0\n\t"
-		"lsl %x3, %1, %0\n\t"
-		"lsl %x4, %1, %0\n\t"
-		"lsr %x5, %1, %0\n\t"
-		"lsr %x6, %1, %0\n\t"
-		"lsl %x7, %1, %0\n\t"
-		"lsl %x8, %1, %0\n\t"
-		"lsr %x9, %1, %0\n\t"
-		"lsr %x10, %1, %0\n\t"
+		"lsr %%x1, %1, %0\n\t" 
+		"lsr %%x2, %1, %0\n\t"
+		"lsl %%x3, %1, %0\n\t"
+		"lsl %%x4, %1, %0\n\t"
+		"lsr %%x5, %1, %0\n\t"
+		"lsr %%x6, %1, %0\n\t"
+		"lsl %%x7, %1, %0\n\t"
+		"lsl %%x8, %1, %0\n\t"
+		"lsr %%x9, %1, %0\n\t"
+		"lsr %%x10, %1, %0\n\t"
 
 		"jmp loop\n\t"
 		:
 		: "r"(count), "r"(my_uint64)
-		: "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10");
+		: "%x1", "%x2", "%x3", "%x4", "%x5", "%x6", "%x7", "%x8", "%x9", "%x10");
 
 	return 0;
-
 }
 
-int main(int argc, char *argv[])
-{
+// Collects traces
+static __attribute__((noinline)) void *monitor(void *in){
+	static int rept_index = 0;
+
+	struct args_t *arg = (struct args_t *)in;
+
+	// look for how to pin monitor to a single CPU
+
+	// Set filename
+	// The format is, e.g., ./out/all_02_2330.out
+	// where 02 is the selector and 2330 is an index to prevent overwriting files
+	char output_filename[64];
+	sprintf(output_filename, "./out/all_%02d_%06d.out", arg->selector, rept_index);
+	rept_index += 1;
+
+	// Prepare output file
+	FILE *output_file = fopen((char *)output_filename, "w");
+	if (output_file == NULL) {
+		perror("output file");
+	}
+
+	// Prepare initial measurement
+	
+	// Collect measurements
+	for (uint64_t i = 0; i < arg->iters; i++) {
+		// Collect samples and wait between each
+	}
+
+	// Clean up
+	fclose(output_file);
+	return 0;
+}
+
+int main(int argc, char *argv[]){
 	// Check arguments
 	if (argc != 4) {
 		fprintf(stderr, "Wrong Input! Enter: %s <ntasks> <samples> <outer>\n", argv[0]);
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	// Read in args
@@ -86,12 +119,15 @@ int main(int argc, char *argv[])
 	// Read the selectors file line by line
 	int num_selectors = 0;
 	int selectors[100];
-	size_t len = 0;
-	ssize_t read = 0;
+
 	char *line = NULL;
-	while ((read = getline(&line, &len, selectors_file)) != -1) {
-		if (line[read - 1] == '\n')
-			line[--read] = '\0';
+	while (fgets(line, sizeof(line), selectors_file) != NULL) {
+		// remove newline in the buffer
+		size_t read = strlen(line);
+		if (read > 0 && line[read - 1] == '\n') {
+			line[read - 1] = '\0';
+			--read;
+		}
 
 		// Read selector
 		sscanf(line, "%d", &(selectors[num_selectors]));
@@ -106,37 +142,31 @@ int main(int argc, char *argv[])
 	attacker_core_ID = 0;
 	// Start code to measure CPU
 
-	// Allocate memory for the threads
-	char *tstacks = mmap(NULL, (ntasks + 1) * STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {
 
 		// Set alternating selector
 		arg.selector = selectors[i % num_selectors];
 
-		// Start victim threads
-		int tids[ntasks];
+		pthread_t threads[ntasks];
 		for (int tnum = 0; tnum < ntasks; tnum++) {
-			tids[tnum] = clone(&victim, tstacks + (ntasks - tnum) * STACK_SIZE, CLONE_VM | SIGCHLD, &arg);
+			pthread_create(&threads[tnum], NULL, victim, &arg);
 		}
 
 		// Start the monitor thread
-		clone(&monitor, tstacks + (ntasks + 1) * STACK_SIZE, CLONE_VM | SIGCHLD, (void *)&arg);
+		pthread_t monitor_thread;
+		pthread_create(&monitor_thread, NULL, monitor, &arg);
 
 		// Join monitor thread
-		wait(NULL);
+		pthread_join(monitor_thread, NULL);
 
 		// Kill victim threads
 		for (int tnum = 0; tnum < ntasks; tnum++) {
-			syscall(SYS_tgkill, tids[tnum], tids[tnum], SIGTERM);
+			pthread_cancel(threads[tnum]);
 
 			// Need to join o/w the threads remain as zombies
 			// https://askubuntu.com/a/427222/1552488
-			wait(NULL);
+			pthread_join(threads[tnum], NULL);
 		}
 	}
-
-	// Clean up
-	munmap(tstacks, (ntasks + 1) * STACK_SIZE);
 }
