@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
 	int selectors[100];
 
 	char *line = NULL;
-	while (fgets(line, sizeof(line), selectors_file) != NULL) {
+	while (fgets(line, 0, selectors_file) != NULL) {
 		// remove newline in the buffer
 		size_t read = strlen(line);
 		if (read > 0 && line[read - 1] == '\n') {
