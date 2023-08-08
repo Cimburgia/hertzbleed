@@ -76,7 +76,7 @@ static __attribute__((noinline)) void *monitor(void *in){
 		perror("output file");
 	}
 
-	// Prepare initial measurement
+	// Collect initial measurement
 	
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
@@ -133,7 +133,17 @@ int main(int argc, char *argv[]){
 		sscanf(line, "%d", &(selectors[num_selectors]));
 		num_selectors += 1;
 	}
+	// size_t len = 0;
+	// ssize_t read = 0;
+	// char *line = NULL;
+	// while ((read = getline(&line, &len, selectors_file)) != -1) {
+	// 	if (line[read - 1] == '\n')
+	// 		line[--read] = '\0';
 
+	// 	// Read selector
+	// 	sscanf(line, "%d", &(selectors[num_selectors]));
+	// 	num_selectors += 1;
+	// }
 	// Set the scheduling priority to high to avoid interruptions
 	// (lower priorities cause more favorable scheduling, and -20 is the max)
 	setpriority(PRIO_PROCESS, 0, -20);
@@ -141,6 +151,7 @@ int main(int argc, char *argv[]){
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
 	// Start code to measure CPU
+	// Prepare the sampling channel
 
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {
