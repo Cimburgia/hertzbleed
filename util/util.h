@@ -9,7 +9,8 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <x86intrin.h>
+#include <stdlib.h>
+// how can I keep this #include <x86intrin.h>
 
 uint64_t get_time(void);
 
