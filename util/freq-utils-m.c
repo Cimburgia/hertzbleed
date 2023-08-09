@@ -30,7 +30,7 @@ CFDictionaryRef sample(unit_data *unit_data, int time_ns) {
 }
 
 /*
- * Takes a sample and a core id and returns a histogram of residency values
+ * Takes a sample and a core id and returns a cpu_freq
  * Keys and values of cores are hard coded for now:
  * 
  * ECPU Complex (0)
@@ -63,9 +63,29 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
     return residencies;
 }
 
-// uint64_t get_frequency(int core_id){
+uint64_t get_frequency(CFDictionaryRef cpu_delta, int core_id){
+    // Get number of indicies 8 or 18 depending on E vs. P
+    CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
+    __block uint64_t sum = 0;
+    IOReportIterate(cpu_delta, ^int(IOReportSampleRef sample) {
+        
+        for (int i = 0; i < IOReportStateGetCount(sample); i++) {
+            CFStringRef subgroup    = IOReportChannelGetSubGroup(sample);
+            CFStringRef idx_name    = IOReportStateGetNameForIndex(sample, i);
+            CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
+            uint64_t residency      = IOReportStateGetResidency(sample, i);
 
-// }
+            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
+                // Exclude idle value
+                if (CFStringCompare(idx_name, CFSTR("IDLE"), 0) != kCFCompareEqualTo){
+                    sum = sum + residency;
+                }
+            }
+        }
+        return kIOReportIterOk;
+    });
+    return sum;
+}
 
 int main(int argc, char* argv[]) {
     struct unit_data *unit = malloc(sizeof(unit_data));
@@ -74,9 +94,11 @@ int main(int argc, char* argv[]) {
     init_unit_data(unit);
     CFDictionaryRef s1 = sample(unit, 100);
     uint64_t *residencies = get_state_res(s1, 6);
+    uint64_t sums = get_frequency(s1, 6);
     for (int i = 0; i < 18; i++){
         printf("%llu\n", residencies[i]);
     }
+    printf("%llu\n",sums);
     free(residencies);
     CFRelease(s1);
 }

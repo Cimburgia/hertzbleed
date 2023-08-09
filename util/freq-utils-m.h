@@ -38,8 +38,14 @@ typedef struct unit_data{
     CFMutableDictionaryRef cpu_chann;
 } unit_data;
 
+typedef struct cpu_freq_data{
+    uint64_t *residencies;
+    uint64_t frequency;
+} cpu_freq_data;
+
+
 void init_unit_data(unit_data *data);
 CFDictionaryRef sample(unit_data *data, int time);
 uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id);
-// uint64_t get_frequency(int core_id);
+uint64_t get_frequency(CFDictionaryRef cpu_delta, int core_id);
 #endif
