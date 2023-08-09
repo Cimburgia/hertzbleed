@@ -3,6 +3,11 @@
 static char *chann_array[] = {"ECPU","PCPU","ECPU0","ECPU1","ECPU2","ECPU3","PCPU0","PCPU1","PCPU2","PCPU3"};
 static char *idx_array_ecpu[] = {"IDLE","V0P6","V1P5","V2P4","V3P3","V4P2","V5P1","V6P0"};
 static char *idx_array_pcpu[] = {"IDLE", "V0P16", "V1P15","V2P14","V3P13","V4P12","V5P11","V6P10","V7P9","V8P8","V9P7","V10P6","V11P5","V12P4","V13P3","V14P2","V15P1","V16P0"};
+static float e_array[] = {600, 912, 1284, 1752, 2004, 2256, 2424};
+static float p_array[] = {660, 924, 1188, 1452, 1704, 1968, 2208, 2400, 2568, 2724, 2868, 2988, 3096, 3204, 3324, 3408, 3504};
+static float *freq_state_cores[] = {e_array, p_array};
+
+
 /**
  * Initialize the channel subscriptions so we can continue to sample over them throughout the
  * experiments. 
@@ -40,8 +45,8 @@ CFDictionaryRef sample(unit_data *unit_data, int time_ns) {
 */
 uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
     // Get number of indicies 8 or 18 depending on E vs. P
-    int num_idxs = 8;
-    if (core_id == 1 || core_id > 5) num_idxs = 18;
+    int num_idxs = 7;
+    if (core_id == 1 || core_id > 5) num_idxs = 17;
     uint64_t *residencies = (uint64_t *)malloc(num_idxs * sizeof(uint64_t));
     CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
   
@@ -53,7 +58,8 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
             CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
             uint64_t residency      = IOReportStateGetResidency(sample, i);
 
-            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
+            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo &&
+                (CFStringFind(idx_name, CFSTR("IDLE"), 0).location != kCFCompareEqualTo)){
                 residencies[ii] = residency;
                 ii++;
             }
@@ -63,28 +69,26 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
     return residencies;
 }
 
-uint64_t get_frequency(CFDictionaryRef cpu_delta, int core_id){
-    // Get number of indicies 8 or 18 depending on E vs. P
-    CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
-    __block uint64_t sum = 0;
-    IOReportIterate(cpu_delta, ^int(IOReportSampleRef sample) {
-        
-        for (int i = 0; i < IOReportStateGetCount(sample); i++) {
-            CFStringRef subgroup    = IOReportChannelGetSubGroup(sample);
-            CFStringRef idx_name    = IOReportStateGetNameForIndex(sample, i);
-            CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
-            uint64_t residency      = IOReportStateGetResidency(sample, i);
-
-            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
-                // Exclude idle value
-                if (CFStringCompare(idx_name, CFSTR("IDLE"), 0) != kCFCompareEqualTo){
-                    sum = sum + residency;
-                }
-            }
-        }
-        return kIOReportIterOk;
-    });
-    return sum;
+float get_frequency(CFDictionaryRef cpu_delta, int core_id){
+    // Get table nums
+    int num_idxs = 7;
+    int table_idx = 0;
+    if (core_id == 1 || core_id > 5){
+        num_idxs = 17;
+        table_idx = 1;
+    }
+    uint64_t *residencies = get_state_res(cpu_delta, core_id);
+    uint64_t sum = 0;
+    float freq = 0;
+    // Get total residency values
+    for (int i = 1; i < num_idxs; i++){
+        sum += residencies[i];
+    }
+    for (int i = 1; i < num_idxs; i++){
+        float percent = (float)residencies[i]/sum;
+        freq += (percent*freq_state_cores[table_idx][i]);
+    }
+    return freq;
 }
 
 int main(int argc, char* argv[]) {
@@ -94,11 +98,11 @@ int main(int argc, char* argv[]) {
     init_unit_data(unit);
     CFDictionaryRef s1 = sample(unit, 100);
     uint64_t *residencies = get_state_res(s1, 6);
-    uint64_t sums = get_frequency(s1, 6);
+    float sums = get_frequency(s1, 6);
     for (int i = 0; i < 18; i++){
         printf("%llu\n", residencies[i]);
     }
-    printf("%llu\n",sums);
+    printf("%f\n",sums);
     free(residencies);
     CFRelease(s1);
 }
