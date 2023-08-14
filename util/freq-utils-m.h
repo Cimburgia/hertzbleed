@@ -1,7 +1,6 @@
 #ifndef _FREQ_UTILS_M_H
 #define _FREQ_UTILS_M_H
 
-#include <sys/sysctl.h>
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CoreFoundation.h>
 

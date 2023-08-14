@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 
 #include "../util/util.h"
+#include "../util/freq-utils-m.h"
 
 volatile static int attacker_core_ID;
 
@@ -13,6 +14,7 @@ volatile static int attacker_core_ID;
 struct args_t {
 	uint64_t iters;
 	int selector;
+	unit_data *unit;
 };
 
 static __attribute__((noinline)) void *victim(void *varg){
@@ -147,12 +149,11 @@ int main(int argc, char *argv[]){
 	// Set the scheduling priority to high to avoid interruptions
 	// (lower priorities cause more favorable scheduling, and -20 is the max)
 	setpriority(PRIO_PROCESS, 0, -20);
-
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
-	// Start code to measure CPU
-	// Prepare the sampling channel
-
+	struct unit_data *unit = malloc(sizeof(unit_data));
+	init_unit_data(unit);
+	arg.unit = unit;
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {
 

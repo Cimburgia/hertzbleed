@@ -84,25 +84,27 @@ float get_frequency(CFDictionaryRef cpu_delta, int core_id){
     for (int i = 1; i < num_idxs; i++){
         sum += residencies[i];
     }
+    // Take average
     for (int i = 1; i < num_idxs; i++){
         float percent = (float)residencies[i]/sum;
         freq += (percent*freq_state_cores[table_idx][i]);
     }
-    return freq;
+    // convert to Hz and return
+    return freq * 1000;
 }
 
-int main(int argc, char* argv[]) {
-    struct unit_data *unit = malloc(sizeof(unit_data));
+// int main(int argc, char* argv[]) {
+//     struct unit_data *unit = malloc(sizeof(unit_data));
 
-    // initialize the cmd_data
-    init_unit_data(unit);
-    CFDictionaryRef s1 = sample(unit, 100);
-    uint64_t *residencies = get_state_res(s1, 6);
-    float sums = get_frequency(s1, 6);
-    for (int i = 0; i < 18; i++){
-        printf("%llu\n", residencies[i]);
-    }
-    printf("%f\n",sums);
-    free(residencies);
-    CFRelease(s1);
-}
+//     // initialize the cmd_data
+//     init_unit_data(unit);
+//     CFDictionaryRef s1 = sample(unit, 100);
+//     uint64_t *residencies = get_state_res(s1, 6);
+//     float sums = get_frequency(s1, 6);
+//     for (int i = 0; i < 18; i++){
+//         printf("%llu\n", residencies[i]);
+//     }
+//     printf("%f\n",sums);
+//     free(residencies);
+//     CFRelease(s1);
+// }
