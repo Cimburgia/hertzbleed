@@ -89,7 +89,7 @@ static __attribute__((noinline)) void *monitor(void *in){
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 		// Collect samples and wait between each
-		CFDictionaryRef cpu_delta = sample(arg->unit, 100000);
+		CFDictionaryRef cpu_delta = sample(arg->unit, 1);
 		float freqE = get_frequency(cpu_delta, 0);
 		float freqP = get_frequency(cpu_delta, 1);
 		
