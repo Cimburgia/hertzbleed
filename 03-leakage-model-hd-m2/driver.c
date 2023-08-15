@@ -89,11 +89,11 @@ static __attribute__((noinline)) void *monitor(void *in){
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 		// Collect samples and wait between each
-		CFDictionaryRef cpu_delta = sample(arg->unit, 1000000);
-		float freq = get_frequency(cpu_delta, 0);
-		// hard code this for now
-		float energy = 0.1;
-		fprintf(output_file, "%.1f %.1f" PRIu32 "\n", energy, freq);
+		CFDictionaryRef cpu_delta = sample(arg->unit, 100000);
+		float freqE = get_frequency(cpu_delta, 0);
+		float freqP = get_frequency(cpu_delta, 1);
+		
+		fprintf(output_file, "%f %f" PRIu32 "\n", freqE, freqP);
 		CFRelease(cpu_delta);
 	}
 	// Clean up
@@ -158,7 +158,6 @@ int main(int argc, char *argv[]){
 
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {
-		
 		// Set alternating selector
 		arg.selector = selectors[i % num_selectors];
 
