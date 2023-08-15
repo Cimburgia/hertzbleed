@@ -16,7 +16,7 @@ date=`date +"%m%d-%H%M"`
 echo "This script will take about $((((10)*$outer*(16+56+48+32+16+56+48+32+16+16)/60+10)/60)) hours. Reduce 'outer' if you want a shorter run."
 
 ### Warm Up ###
-stress-ng -q --cpu $TOTAL_LOGICAL_CORES -t 10m
+#stress-ng -q --cpu $TOTAL_LOGICAL_CORES -t 10m
 
 sudo rm -rf out
 mkdir out
@@ -28,4 +28,3 @@ done
 
 sudo ./bin/driver ${num_thread} ${samples} ${outer}
 cp -r out data/out-${date}
-cd ../scripts

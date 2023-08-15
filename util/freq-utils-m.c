@@ -1,12 +1,11 @@
 #include "freq-utils-m.h"
 
 static char *chann_array[] = {"ECPU","PCPU","ECPU0","ECPU1","ECPU2","ECPU3","PCPU0","PCPU1","PCPU2","PCPU3"};
-static char *idx_array_ecpu[] = {"IDLE","V0P6","V1P5","V2P4","V3P3","V4P2","V5P1","V6P0"};
-static char *idx_array_pcpu[] = {"IDLE", "V0P16", "V1P15","V2P14","V3P13","V4P12","V5P11","V6P10","V7P9","V8P8","V9P7","V10P6","V11P5","V12P4","V13P3","V14P2","V15P1","V16P0"};
+// static char *idx_array_ecpu[] = {"IDLE","V0P6","V1P5","V2P4","V3P3","V4P2","V5P1","V6P0"};
+// static char *idx_array_pcpu[] = {"IDLE", "V0P16", "V1P15","V2P14","V3P13","V4P12","V5P11","V6P10","V7P9","V8P8","V9P7","V10P6","V11P5","V12P4","V13P3","V14P2","V15P1","V16P0"};
 static float e_array[] = {600, 912, 1284, 1752, 2004, 2256, 2424};
 static float p_array[] = {660, 924, 1188, 1452, 1704, 1968, 2208, 2400, 2568, 2724, 2868, 2988, 3096, 3204, 3324, 3408, 3504};
 static float *freq_state_cores[] = {e_array, p_array};
-
 
 /**
  * Initialize the channel subscriptions so we can continue to sample over them throughout the
@@ -58,10 +57,13 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
             CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
             uint64_t residency      = IOReportStateGetResidency(sample, i);
 
-            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo &&
-                (CFStringFind(idx_name, CFSTR("IDLE"), 0).location != kCFCompareEqualTo)){
-                residencies[ii] = residency;
-                ii++;
+             if (CFStringCompare(subgroup, CFSTR("CPU Complex Performance States"), 0) == kCFCompareEqualTo ||
+                    CFStringCompare(subgroup, CFSTR("CPU Core Performance States"), 0) == kCFCompareEqualTo) {
+                if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo &&
+                    (CFStringFind(idx_name, CFSTR("IDLE"), 0).location != kCFCompareEqualTo)){
+                    residencies[ii] = residency;
+                    ii++;
+                }
             }
         }
         return kIOReportIterOk;
@@ -81,15 +83,16 @@ float get_frequency(CFDictionaryRef cpu_delta, int core_id){
     uint64_t sum = 0;
     float freq = 0;
     // Get total residency values
-    for (int i = 1; i < num_idxs; i++){
+    for (int i = 0; i < num_idxs; i++){
         sum += residencies[i];
     }
     // Take average
-    for (int i = 1; i < num_idxs; i++){
+    for (int i = 0; i < num_idxs; i++){
         float percent = (float)residencies[i]/sum;
         freq += (percent*freq_state_cores[table_idx][i]);
     }
     // convert to Hz and return
+    free(residencies);
     return freq * 1000;
 }
 
@@ -98,13 +101,15 @@ float get_frequency(CFDictionaryRef cpu_delta, int core_id){
 
 //     // initialize the cmd_data
 //     init_unit_data(unit);
-//     CFDictionaryRef s1 = sample(unit, 100);
-//     uint64_t *residencies = get_state_res(s1, 6);
-//     float sums = get_frequency(s1, 6);
-//     for (int i = 0; i < 18; i++){
-//         printf("%llu\n", residencies[i]);
+//     for(int i=0; i<100; i++){
+//         CFDictionaryRef s1 = sample(unit, 100);
+//         //uint64_t *residencies = get_state_res(s1, 6);
+//         float sums = get_frequency(s1, 6);
+//         // for (int i = 0; i < 18; i++){
+//         //     printf("%llu\n", residencies[i]);
+//         // }
+//         printf("%f\n",sums);
+ 
+//         CFRelease(s1);
 //     }
-//     printf("%f\n",sums);
-//     free(residencies);
-//     CFRelease(s1);
 // }

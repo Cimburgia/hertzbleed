@@ -17,42 +17,52 @@ struct args_t {
 	unit_data *unit;
 };
 
+// Register signal as exit
+void sigusr1(int signum) {
+    pthread_exit(NULL);
+}
+
 static __attribute__((noinline)) void *victim(void *varg){
 	struct args_t *arg = varg;
 	uint64_t my_uint64 = 0x0000FFFFFFFF0000;
 	uint64_t count = (uint64_t)arg->selector;
-
-	// shift %1 (my_unit64) left by %0 (count) and store in %register
+	
+	// Unmask SIGUSR1 so call to exit will register
+	sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+	
+	// Begin HD computation
 	asm volatile(
-		".align 64\t\n"
 		"loop:\n\t"
 		
-		"lsl %%x1, %1, %0\n\t"
-		"lsl %%x2, %1, %0\n\t"
-		"lsr %%x3, %1, %0\n\t"
-		"lsr %%x4, %1, %0\n\t"
-		"lsl %%x5, %1, %0\n\t"
-		"lsl %%x6, %1, %0\n\t"
-		"lsr %%x7, %1, %0\n\t"
-		"lsr %%x8, %1, %0\n\t"
-		"lsl %%x9, %1, %0\n\t"
-		"lsl %%x10, %1, %0\n\t"
+		"lsl x1, %1, %0\n\t"
+		"lsl x2, %1, %0\n\t"
+		"lsr x3, %1, %0\n\t"
+		"lsr x4, %1, %0\n\t"
+		"lsl x5, %1, %0\n\t"
+		"lsl x6, %1, %0\n\t"
+		"lsr x7, %1, %0\n\t"
+		"lsr x8, %1, %0\n\t"
+		"lsl x9, %1, %0\n\t"
+		"lsl x10, %1, %0\n\t"
 
-		"lsr %%x1, %1, %0\n\t" 
-		"lsr %%x2, %1, %0\n\t"
-		"lsl %%x3, %1, %0\n\t"
-		"lsl %%x4, %1, %0\n\t"
-		"lsr %%x5, %1, %0\n\t"
-		"lsr %%x6, %1, %0\n\t"
-		"lsl %%x7, %1, %0\n\t"
-		"lsl %%x8, %1, %0\n\t"
-		"lsr %%x9, %1, %0\n\t"
-		"lsr %%x10, %1, %0\n\t"
+		"lsr x1, %1, %0\n\t" 
+		"lsr x2, %1, %0\n\t"
+		"lsl x3, %1, %0\n\t"
+		"lsl x4, %1, %0\n\t"
+		"lsr x5, %1, %0\n\t"
+		"lsr x6, %1, %0\n\t"
+		"lsl x7, %1, %0\n\t"
+		"lsl x8, %1, %0\n\t"
+		"lsr x9, %1, %0\n\t"
+		"lsr x10, %1, %0\n\t"
 
-		"jmp loop\n\t"
+		"b loop\n\t"
 		:
 		: "r"(count), "r"(my_uint64)
-		: "%x1", "%x2", "%x3", "%x4", "%x5", "%x6", "%x7", "%x8", "%x9", "%x10");
+		: "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10");
 
 	return 0;
 }
@@ -60,7 +70,6 @@ static __attribute__((noinline)) void *victim(void *varg){
 // Collects traces
 static __attribute__((noinline)) void *monitor(void *in){
 	static int rept_index = 0;
-
 	struct args_t *arg = (struct args_t *)in;
 
 	// look for how to pin monitor to a single CPU
@@ -77,14 +86,16 @@ static __attribute__((noinline)) void *monitor(void *in){
 	if (output_file == NULL) {
 		perror("output file");
 	}
-
-	// Collect initial measurement
-	
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 		// Collect samples and wait between each
+		CFDictionaryRef cpu_delta = sample(arg->unit, 1000000);
+		float freq = get_frequency(cpu_delta, 0);
+		// hard code this for now
+		float energy = 0.1;
+		fprintf(output_file, "%.1f %.1f" PRIu32 "\n", energy, freq);
+		CFRelease(cpu_delta);
 	}
-
 	// Clean up
 	fclose(output_file);
 	return 0;
@@ -118,45 +129,36 @@ int main(int argc, char *argv[]){
 	if (selectors_file == NULL)
 		perror("fopen error");
 
-	// Read the selectors file line by line
+		// Read the selectors file line by line
 	int num_selectors = 0;
 	int selectors[100];
+	char line[1024];
 
-	char *line = NULL;
-	while (fgets(line, 0, selectors_file) != NULL) {
-		// remove newline in the buffer
-		size_t read = strlen(line);
-		if (read > 0 && line[read - 1] == '\n') {
-			line[read - 1] = '\0';
-			--read;
-		}
-
+	while (fgets(line, sizeof(line), selectors_file) != NULL){
 		// Read selector
 		sscanf(line, "%d", &(selectors[num_selectors]));
-		num_selectors += 1;
+		num_selectors++;
 	}
-	// size_t len = 0;
-	// ssize_t read = 0;
-	// char *line = NULL;
-	// while ((read = getline(&line, &len, selectors_file)) != -1) {
-	// 	if (line[read - 1] == '\n')
-	// 		line[--read] = '\0';
 
-	// 	// Read selector
-	// 	sscanf(line, "%d", &(selectors[num_selectors]));
-	// 	num_selectors += 1;
-	// }
-	// Set the scheduling priority to high to avoid interruptions
-	// (lower priorities cause more favorable scheduling, and -20 is the max)
 	setpriority(PRIO_PROCESS, 0, -20);
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
 	struct unit_data *unit = malloc(sizeof(unit_data));
 	init_unit_data(unit);
 	arg.unit = unit;
+
+	// Register SIGUSR1 as exit
+	signal(SIGUSR1, sigusr1);
+
+	// Mask SIGUSR1 in all threads
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
+
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {
-
+		
 		// Set alternating selector
 		arg.selector = selectors[i % num_selectors];
 
@@ -168,14 +170,12 @@ int main(int argc, char *argv[]){
 		// Start the monitor thread
 		pthread_t monitor_thread;
 		pthread_create(&monitor_thread, NULL, monitor, &arg);
-
 		// Join monitor thread
 		pthread_join(monitor_thread, NULL);
-
-		// Kill victim threads
+		
 		for (int tnum = 0; tnum < ntasks; tnum++) {
-			pthread_cancel(threads[tnum]);
-
+			// Kill victim thread
+			kill(getpid(), SIGUSR1);
 			// Need to join o/w the threads remain as zombies
 			// https://askubuntu.com/a/427222/1552488
 			pthread_join(threads[tnum], NULL);
