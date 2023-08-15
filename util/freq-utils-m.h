@@ -44,7 +44,7 @@ typedef struct cpu_freq_data{
 
 
 void init_unit_data(unit_data *data);
-CFDictionaryRef sample(unit_data *data, int time);
+CFDictionaryRef sample(unit_data *data, int time_ms);
 uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id);
 float get_frequency(CFDictionaryRef cpu_delta, int core_id);
 #endif

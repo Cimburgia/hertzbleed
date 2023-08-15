@@ -19,8 +19,8 @@ void init_unit_data(unit_data *data){
     CFRelease(data->cpu_chann);
 }
 
-CFDictionaryRef sample(unit_data *unit_data, int time_ns) {
-    long time_between_measurements = time_ns * 1000000L;
+CFDictionaryRef sample(unit_data *unit_data, int time_ms) {
+    long time_between_measurements = time_ms * 1000000L;
     CFDictionaryRef cpusamp_a  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
     nanosleep((const struct timespec[]){{0, time_between_measurements}}, NULL);
     CFDictionaryRef cpusamp_b  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
