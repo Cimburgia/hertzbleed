@@ -34,6 +34,7 @@ def main():
 
         plt.figure(figsize=(3, 2))
         plt.scatter(x, y, s=3)
+        plt.plot(x,y)
         plt.xlabel('COUNT')
         plt.ylabel('Frequency (GHz)')
         # plt.legend(fontsize=7)

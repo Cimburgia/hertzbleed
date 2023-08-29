@@ -89,12 +89,14 @@ static __attribute__((noinline)) void *monitor(void *in){
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 		// Collect samples and wait between each
-		CFDictionaryRef cpu_delta = sample(arg->unit, 1);
-		float freqE = get_frequency(cpu_delta, 0);
-		float freqP = get_frequency(cpu_delta, 1);
+		sample_deltas *deltas = sample(arg->unit, 1);
+		float freqE = get_frequency(deltas->cpu_delta, 0);
+		float freqP = get_frequency(deltas->cpu_delta, 1);
 		
 		fprintf(output_file, "%f %f" PRIu32 "\n", freqE, freqP);
-		CFRelease(cpu_delta);
+		CFRelease(deltas->cpu_delta);
+		CFRelease(deltas->pwr_delta);
+		free(deltas);
 	}
 	// Clean up
 	fclose(output_file);
@@ -179,5 +181,6 @@ int main(int argc, char *argv[]){
 			// https://askubuntu.com/a/427222/1552488
 			pthread_join(threads[tnum], NULL);
 		}
+		sleep(2);
 	}
 }

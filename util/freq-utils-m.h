@@ -28,6 +28,7 @@ extern long IOReportSimpleGetIntegerValue(CFDictionaryRef, int);
 extern CFStringRef IOReportChannelGetChannelName(CFDictionaryRef);
 extern CFStringRef IOReportChannelGetSubGroup(CFDictionaryRef);
 extern CFStringRef IOReportStateGetNameForIndex(CFDictionaryRef, int);
+extern CFStringRef IOReportChannelGetGroup(CFDictionaryRef);
 
 extern void IOReportMergeChannels(CFMutableDictionaryRef, CFMutableDictionaryRef, CFTypeRef);
 
@@ -35,6 +36,9 @@ typedef struct unit_data{
     IOReportSubscriptionRef cpu_sub;
     CFMutableDictionaryRef cpu_sub_chann;
     CFMutableDictionaryRef cpu_chann;
+    IOReportSubscriptionRef pwr_sub;
+    CFMutableDictionaryRef pwr_sub_chann;
+    CFMutableDictionaryRef energy_chann;
 } unit_data;
 
 typedef struct cpu_freq_data{
@@ -42,9 +46,14 @@ typedef struct cpu_freq_data{
     uint64_t frequency;
 } cpu_freq_data;
 
+typedef struct sample_deltas{
+    CFDictionaryRef cpu_delta;
+    CFDictionaryRef pwr_delta;
+} sample_deltas;
 
 void init_unit_data(unit_data *data);
-CFDictionaryRef sample(unit_data *data, int time_ms);
+sample_deltas *sample(unit_data *unit_data, int time_ms);
 uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id);
 float get_frequency(CFDictionaryRef cpu_delta, int core_id);
+void get_power(CFDictionaryRef pwr_delta, int core_id);
 #endif

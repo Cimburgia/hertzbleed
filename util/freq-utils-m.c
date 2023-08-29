@@ -14,23 +14,36 @@ static float *freq_state_cores[] = {e_array, p_array};
 void init_unit_data(unit_data *data){
     //Initialize channels
     data->cpu_chann = IOReportCopyChannelsInGroup(CFSTR("CPU Stats"), 0, 0, 0, 0);
+    data->energy_chann = IOReportCopyChannelsInGroup(CFSTR("Energy Model"), 0, 0, 0, 0);
+
     // Create subscription
     data->cpu_sub  = IOReportCreateSubscription(NULL, data->cpu_chann, &data->cpu_sub_chann, 0, 0);
+    data->pwr_sub  = IOReportCreateSubscription(NULL, data->energy_chann, &data->pwr_sub_chann, 0, 0);
     CFRelease(data->cpu_chann);
+    CFRelease(data->energy_chann);
 }
 
-CFDictionaryRef sample(unit_data *unit_data, int time_ms) {
+sample_deltas *sample(unit_data *unit_data, int time_ms) {
     long time_between_measurements = time_ms * 1000000L;
     CFDictionaryRef cpusamp_a  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
+    CFDictionaryRef pwrsamp_a  = IOReportCreateSamples(unit_data->pwr_sub, unit_data->pwr_sub_chann, NULL);
     nanosleep((const struct timespec[]){{0, time_between_measurements}}, NULL);
     CFDictionaryRef cpusamp_b  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
+    CFDictionaryRef pwrsamp_b  = IOReportCreateSamples(unit_data->pwr_sub, unit_data->pwr_sub_chann, NULL);
   
     CFDictionaryRef cpu_delta  = IOReportCreateSamplesDelta(cpusamp_a, cpusamp_b, NULL);
-    
+    CFDictionaryRef pwr_delta  = IOReportCreateSamplesDelta(pwrsamp_a, pwrsamp_b, NULL);
+
     // Done with these
     CFRelease(cpusamp_a);
     CFRelease(cpusamp_b);
-    return cpu_delta;
+    CFRelease(pwrsamp_a);
+    CFRelease(pwrsamp_b);
+    
+    sample_deltas *deltas = (sample_deltas *) malloc(sizeof(sample_deltas));
+    deltas->cpu_delta = cpu_delta;
+    deltas->pwr_delta = pwr_delta;
+    return deltas;
 }
 
 /*
@@ -71,6 +84,24 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
     return residencies;
 }
 
+void get_power(CFDictionaryRef pwr_delta, int core_id){
+    // Get number of indicies 8 or 18 depending on E vs. P
+    CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
+    IOReportIterate(pwr_delta, ^int(IOReportSampleRef sample) {
+        CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
+        CFStringRef group       = IOReportChannelGetGroup(sample);
+        long      value       = IOReportSimpleGetIntegerValue(sample, 0);
+        float pwr;
+        if (CFStringCompare(group, CFSTR("Energy Model"), 0) == kCFCompareEqualTo) {
+            if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
+                pwr = (float)value/1000000L;
+                printf("%f\n", pwr);
+            }
+        }  
+        return kIOReportIterOk;
+    });
+}
+
 float get_frequency(CFDictionaryRef cpu_delta, int core_id){
     // Get table nums
     int num_idxs = 7;
@@ -96,20 +127,11 @@ float get_frequency(CFDictionaryRef cpu_delta, int core_id){
     return freq * 1000;
 }
 
-// int main(int argc, char* argv[]) {
-//     struct unit_data *unit = malloc(sizeof(unit_data));
+int main(int argc, char* argv[]) {
+    struct unit_data *unit = malloc(sizeof(unit_data));
 
-//     // initialize the cmd_data
-//     init_unit_data(unit);
-//     for(int i=0; i<100; i++){
-//         CFDictionaryRef s1 = sample(unit, 100);
-//         //uint64_t *residencies = get_state_res(s1, 6);
-//         float sums = get_frequency(s1, 6);
-//         // for (int i = 0; i < 18; i++){
-//         //     printf("%llu\n", residencies[i]);
-//         // }
-//         printf("%f\n",sums);
- 
-//         CFRelease(s1);
-//     }
-// }
+    // initialize the cmd_data
+    init_unit_data(unit);
+    sample_deltas *deltas = sample(unit, 1);
+    get_power(deltas->pwr_delta, 1);
+}

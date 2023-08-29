@@ -23,8 +23,8 @@ echo "$1" > "$new_dir/log.txt"
 # Setup
 samples=10000	# 10 seconds
 outer=3
-num_thread=$TOTAL_LOGICAL_CORES
-
+num_thread=4
+echo "${num_thread} ${samples} ${outer}" >> "$new_dir/log.txt"
 
 # Alert
 echo "This script will take about $((((10)*$outer*(16+56+48+32+16+56+48+32+16+16)/60+10)/60)) hours. Reduce 'outer' if you want a shorter run."
@@ -40,5 +40,6 @@ for selector in `seq 0 16`; do
 	echo $selector >> input.txt
 done
 
+echo
 sudo ./bin/driver ${num_thread} ${samples} ${outer} >> "$new_dir/log.txt"
 cp -r out $new_dir/out-${date}
