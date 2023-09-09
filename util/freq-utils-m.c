@@ -1,8 +1,6 @@
 #include "freq-utils-m.h"
 
 static char *chann_array[] = {"ECPU","PCPU","ECPU0","ECPU1","ECPU2","ECPU3","PCPU0","PCPU1","PCPU2","PCPU3"};
-// static char *idx_array_ecpu[] = {"IDLE","V0P6","V1P5","V2P4","V3P3","V4P2","V5P1","V6P0"};
-// static char *idx_array_pcpu[] = {"IDLE", "V0P16", "V1P15","V2P14","V3P13","V4P12","V5P11","V6P10","V7P9","V8P8","V9P7","V10P6","V11P5","V12P4","V13P3","V14P2","V15P1","V16P0"};
 static float e_array[] = {600, 912, 1284, 1752, 2004, 2256, 2424};
 static float p_array[] = {660, 924, 1188, 1452, 1704, 1968, 2208, 2400, 2568, 2724, 2868, 2988, 3096, 3204, 3324, 3408, 3504};
 static float *freq_state_cores[] = {e_array, p_array};
@@ -24,7 +22,7 @@ void init_unit_data(unit_data *data){
 }
 
 sample_deltas *sample(unit_data *unit_data, int time_ms) {
-    long time_between_measurements = time_ms * 1000000L;
+    long time_between_measurements = 275*1e-3;
     CFDictionaryRef cpusamp_a  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
     CFDictionaryRef pwrsamp_a  = IOReportCreateSamples(unit_data->pwr_sub, unit_data->pwr_sub_chann, NULL);
     nanosleep((const struct timespec[]){{0, time_between_measurements}}, NULL);
@@ -92,9 +90,11 @@ void get_power(CFDictionaryRef pwr_delta, int core_id){
         CFStringRef group       = IOReportChannelGetGroup(sample);
         long      value       = IOReportSimpleGetIntegerValue(sample, 0);
         float pwr;
+       //
         if (CFStringCompare(group, CFSTR("Energy Model"), 0) == kCFCompareEqualTo) {
             if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
-                pwr = (float)value/1000000L;
+                printf("%ld\n", value);
+                pwr = ((float)value/(275*1e-3));
                 printf("%f\n", pwr);
             }
         }  
@@ -133,5 +133,7 @@ int main(int argc, char* argv[]) {
     // initialize the cmd_data
     init_unit_data(unit);
     sample_deltas *deltas = sample(unit, 1);
-    get_power(deltas->pwr_delta, 1);
+    for (int i = 0; i < 10; i++){
+        get_power(deltas->pwr_delta, i);    
+    }
 }
