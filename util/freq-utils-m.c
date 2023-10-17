@@ -82,6 +82,15 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
     return residencies;
 }
 
+/*
+ * Takes a sample and a core id and returns cpu power
+ * Keys and values of cores are hard coded for now:
+ * 
+ * ECPU Complex (0)
+ * PCPU Complex (1)
+ * ECPU Core 0-3 (2-5)
+ * PCPU Core 0-3 (6-7)
+*/
 void get_power(CFDictionaryRef pwr_delta, int core_id){
     // Get number of indicies 8 or 18 depending on E vs. P
     CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
@@ -93,7 +102,6 @@ void get_power(CFDictionaryRef pwr_delta, int core_id){
        //
         if (CFStringCompare(group, CFSTR("Energy Model"), 0) == kCFCompareEqualTo) {
             if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
-                printf("%ld\n", value);
                 pwr = ((float)value/(275*1e-3));
                 printf("%f\n", pwr);
             }
