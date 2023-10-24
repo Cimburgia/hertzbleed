@@ -94,26 +94,15 @@ static __attribute__((noinline)) int monitor(void *in)
 		perror("output file");
 	}
 
-	// Prepare
-	struct freq_sample_t freq_sample, prev_freq_sample = frequency_msr_raw(attacker_core_ID);
+	freq_init(attacker_core_ID);
 
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 
-		// Wait before next measurement
-		nanosleep((const struct timespec[]){{0, TIME_BETWEEN_MEASUREMENTS}}, NULL);
-
 		// Collect measurement
-		freq_sample = frequency_msr_raw(attacker_core_ID);
+		uint32_t khz = get_frequency(attacker_core_ID);
 
-		// Store measurement
-		uint64_t aperf_delta = freq_sample.aperf - prev_freq_sample.aperf;
-		uint64_t mperf_delta = freq_sample.mperf - prev_freq_sample.mperf;
-		uint32_t khz = (maximum_frequency * aperf_delta) / mperf_delta;
 		fprintf(output_file, "%" PRIu32 "\n", khz);
-
-		// Save current
-		prev_freq_sample = freq_sample;
 	}
 
 	// Clean up
@@ -171,8 +160,7 @@ int main(int argc, char *argv[])
 
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
-	set_frequency_units(attacker_core_ID);
-	frequency_msr_raw(attacker_core_ID);
+	freq_init(attacker_core_ID);
 
 	// Allocate memory for the threads
 	char *tstacks = mmap(NULL, (ntasks + 1) * STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

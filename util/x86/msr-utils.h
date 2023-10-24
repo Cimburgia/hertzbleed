@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <x86intrin.h>
 
-uint64_t my_rdmsr_on_cpu(int core_ID, int reg);
+/**
+ * x86 only - used to read MSRs on a given core
+ */
+uint64_t my_rdmsr_on_cpu(int core_ID, uint32_t reg);
 
 #endif

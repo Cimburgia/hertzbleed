@@ -1,13 +1,10 @@
 #include <sys/resource.h>
 
 #include "../util/freq-utils.h"
-#include "../util/msr-utils.h"
-#include "../util/rapl-utils.h"
+#include "../util/power-utils.h"
 #include "../util/util.h"
 
 volatile static int attacker_core_ID;
-
-#define TIME_BETWEEN_MEASUREMENTS 5000000L // 5 millisecond
 
 // Runs the given command
 static void stress(void *command)
@@ -48,32 +45,17 @@ static __attribute__((noinline)) int monitor(void *in)
 	}
 
 	// Prepare
-	double energy, prev_energy = rapl_msr(attacker_core_ID, PKG_ENERGY);
-	struct freq_sample_t freq_sample, prev_freq_sample = frequency_msr_raw(attacker_core_ID);
+	double energy, prev_energy = get_pkg_energy(attacker_core_ID);
 	// uint32_t freq = frequency_cpufreq(attacker_core_ID);
 
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 
-		// Wait before next measurement
-		nanosleep((const struct timespec[]){{0, TIME_BETWEEN_MEASUREMENTS}}, NULL);
-
-		// Collect measurement
-		freq_sample = frequency_msr_raw(attacker_core_ID);
-		// uint32_t khz = frequency_cpufreq(attacker_core_ID);
-
-		energy = rapl_msr(attacker_core_ID, PKG_ENERGY);
+		fprintf(freq_file, "%" PRIu32 "\n", get_frequency(attacker_core_ID));
+		
+		energy = get_pkg_energy(attacker_core_ID);
 		fprintf(energy_file, "%.15f\n", energy - prev_energy);
 		prev_energy = energy;
-
-		// Store measurement
-		uint64_t aperf_delta = freq_sample.aperf - prev_freq_sample.aperf;
-		uint64_t mperf_delta = freq_sample.mperf - prev_freq_sample.mperf;
-		uint32_t khz = (maximum_frequency * aperf_delta) / mperf_delta;
-		fprintf(freq_file, "%" PRIu32 "\n", khz);
-
-		// Save current
-		prev_freq_sample = freq_sample;
 	}
 
 	// Clean up
@@ -132,10 +114,10 @@ int main(int argc, char *argv[])
 
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
-	set_frequency_units(attacker_core_ID);
-	frequency_msr_raw(attacker_core_ID);
-	set_rapl_units(attacker_core_ID);
-	rapl_msr(attacker_core_ID, PKG_ENERGY);
+	freq_init(attacker_core_ID);
+
+	power_init(attacker_core_ID);
+	get_pkg_energy(attacker_core_ID);
 
 	// Run experiment once for each selector
 	for (int i = 0; i < outer * num_selectors; i++) {

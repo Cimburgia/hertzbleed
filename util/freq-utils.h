@@ -1,27 +1,18 @@
-#ifndef _FREQ_UTILS_H
-#define _FREQ_UTILS_H
+#ifndef _FREQ_UTILS_H_
+#define _FREQ_UTILS_H_
 
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <x86intrin.h>
 
-struct freq_sample_t {
-	uint64_t aperf;
-	uint64_t mperf;
-};
+#include <stdint.h>
 
-extern unsigned int maximum_frequency;
-
-int set_frequency_units(int core_ID);
-struct freq_sample_t frequency_msr_raw(int core_ID);
-uint32_t frequency_msr(int core_ID);
-uint32_t frequency_cpufreq(int cpu_id);
-
+#ifdef ARCH_X86
+#include "./x86/freq-utils-x86.h"
 #endif
+
+#ifdef ARCH_UNIVERSAL
+#include "./common/freq-utils-common.h"
+#endif
+
+void freq_init(int core_ID);
+uint32_t get_frequency(int core_ID);
+
+#endif  // _FREQ_UTILS_H_
