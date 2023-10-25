@@ -91,23 +91,24 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
  * ECPU Core 0-3 (2-5)
  * PCPU Core 0-3 (6-7)
 */
-void get_power(CFDictionaryRef pwr_delta, int core_id){
+float get_power(CFDictionaryRef pwr_delta, int core_id){
+    __block float pwr = 0;
     // Get number of indicies 8 or 18 depending on E vs. P
-    CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
     IOReportIterate(pwr_delta, ^int(IOReportSampleRef sample) {
+        CFStringRef core_id_str = CFStringCreateWithCString(NULL, chann_array[core_id], kCFStringEncodingUTF8);
         CFStringRef chann_name  = IOReportChannelGetChannelName(sample);
         CFStringRef group       = IOReportChannelGetGroup(sample);
         long      value       = IOReportSimpleGetIntegerValue(sample, 0);
-        float pwr;
-       //
+      
         if (CFStringCompare(group, CFSTR("Energy Model"), 0) == kCFCompareEqualTo) {
             if (CFStringCompare(chann_name, core_id_str, 0) == kCFCompareEqualTo){
                 pwr = ((float)value/(275*1e-3));
-                printf("%f\n", pwr);
+                return kIOReportIterStop;
             }
         }  
         return kIOReportIterOk;
     });
+    return pwr;
 }
 
 float get_frequency(CFDictionaryRef cpu_delta, int core_id){
@@ -135,13 +136,12 @@ float get_frequency(CFDictionaryRef cpu_delta, int core_id){
     return freq * 1000;
 }
 
-int main(int argc, char* argv[]) {
-    struct unit_data *unit = malloc(sizeof(unit_data));
+// int main(int argc, char* argv[]) {
+//     struct unit_data *unit = malloc(sizeof(unit_data));
 
-    // initialize the cmd_data
-    init_unit_data(unit);
-    sample_deltas *deltas = sample(unit, 1);
-    for (int i = 0; i < 10; i++){
-        get_power(deltas->pwr_delta, i);    
-    }
-}
+//     // initialize the cmd_data
+//     init_unit_data(unit);
+//     sample_deltas *deltas = sample(unit, 1);
+//     float pwr = get_power(deltas->pwr_delta, 0);  
+//     printf("%f", pwr);
+// }

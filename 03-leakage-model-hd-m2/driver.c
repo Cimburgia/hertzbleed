@@ -17,6 +17,7 @@ struct args_t {
 	unit_data *unit;
 };
 
+// arch-specfic
 // Register signal as exit
 void sigusr1(int signum) {
     pthread_exit(NULL);
@@ -92,8 +93,10 @@ static __attribute__((noinline)) void *monitor(void *in){
 		sample_deltas *deltas = sample(arg->unit, 1);
 		float freqE = get_frequency(deltas->cpu_delta, 0);
 		float freqP = get_frequency(deltas->cpu_delta, 1);
+		float pwrE = get_power(deltas->pwr_delta, 0);
+		float pwrP = get_power(deltas->pwr_delta, 1);
 		
-		fprintf(output_file, "%f %f" PRIu32 "\n", freqE, freqP);
+		fprintf(output_file, "%f %f %f %f" PRIu32 "\n", pwrE, pwrP, freqE, freqP);
 		CFRelease(deltas->cpu_delta);
 		CFRelease(deltas->pwr_delta);
 		free(deltas);
