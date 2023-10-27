@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-TOTAL_PHYSICAL_CORES=`sysctl -n hw.logicalcpu`
-TOTAL_LOGICAL_CORES=`sysctl -n hw.physicalcpu`
+TOTAL_PHYSICAL_CORES=`grep '^core id' /proc/cpuinfo | sort -u | wc -l`
+TOTAL_LOGICAL_CORES=`grep '^core id' /proc/cpuinfo | wc -l`
 
 # Load MSR module
 sudo modprobe msr

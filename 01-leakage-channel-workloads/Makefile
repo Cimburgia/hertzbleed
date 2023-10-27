@@ -18,8 +18,7 @@ CC:= gcc
 LIBS:= -lpthread -lm -lc -lrt 
 UTILS:= ../util/util.o ../util/power-utils.o ../util/freq-utils.o \
 		../util/common/freq-utils-common.o ../util/common/power-utils-common.o \
-		../util/x86/freq-utils-x86.o ../util/x86/msr-utils.o ../util/x86/rapl-utils.o \
-		../util/util.o ../util/freq-utils-m.o
+		../util/x86/freq-utils-x86.o ../util/x86/msr-utils.o ../util/x86/rapl-utils.o
 
 ifeq ($(CPU_MAN_STR), AuthenticAMD)
 	VENDOR = _AMD

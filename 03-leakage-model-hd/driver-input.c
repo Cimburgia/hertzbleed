@@ -145,18 +145,14 @@ int main(int argc, char *argv[])
 	// Read the selectors file line by line
 	int num_selectors = 0;
 	int selectors[100];
-	size_t len = 0;
-	ssize_t read = 0;
-	char *line = NULL;
-	while ((read = getline(&line, &len, selectors_file)) != -1) {
-		if (line[read - 1] == '\n')
-			line[--read] = '\0';
+	char line[1024];
 
+	while (fgets(line, sizeof(line), selectors_file) != NULL){
 		// Read selector
 		sscanf(line, "%d", &(selectors[num_selectors]));
-		num_selectors += 1;
+		num_selectors++;
 	}
-
+	
 	// Set the scheduling priority to high to avoid interruptions
 	// (lower priorities cause more favorable scheduling, and -20 is the max)
 	setpriority(PRIO_PROCESS, 0, -20);

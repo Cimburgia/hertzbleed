@@ -29,9 +29,9 @@ static __attribute__((noinline)) int monitor(void *in)
 
 	// Set filename
 	char energy_filename[64];
-	sprintf(energy_filename, "./out/energy_%s_%06d.out", arg->selector, rept_index);
+	sprintf(energy_filename, "./out/energy_%d_%06d.out", arg->selector, rept_index);
 	char freq_filename[64];
-	sprintf(freq_filename, "./out/freq_%s_%06d.out", arg->selector, rept_index);
+	sprintf(freq_filename, "./out/freq_%d_%06d.out", arg->selector, rept_index);
 	rept_index += 1;
 
 	// Prepare output file
