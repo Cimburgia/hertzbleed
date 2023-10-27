@@ -14,7 +14,7 @@ static void stress(void *command)
 
 struct args_t {
 	uint64_t iters;
-	char *selector;
+	int selector;
 };
 
 // Collects traces
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 		// Prepare background stress command
 		char cpu_mask[16], command[256];
 		sprintf(cpu_mask, "0-%d", ntasks - 1);
-		sprintf(command, "taskset -c %s stress-ng -q --cpu %d --cpu-method %s -t 10m", cpu_mask, ntasks, selectors[i % num_selectors]);
+		sprintf(command, "taskset -c %s stress-ng -q --cpu %d --cpu-method %d -t 10m", cpu_mask, ntasks, selectors[i % num_selectors]);
 		printf("Running: %s\n", command);
 
 		// Cool down
