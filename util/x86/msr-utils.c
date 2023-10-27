@@ -3,7 +3,7 @@
 // Inspired by multiple sources including
 //    https://github.com/intel/msr-tools/blob/master/cpuid.c
 //    https://github.com/intel/msr-tools/blob/master/rdmsr.c
-uint64_t my_rdmsr_on_cpu(int core_ID, int reg)
+uint64_t my_rdmsr_on_cpu(int core_ID, uint32_t reg)
 {
 	uint64_t data;
 	static int fd = -1;
@@ -30,14 +30,14 @@ uint64_t my_rdmsr_on_cpu(int core_ID, int reg)
 		last_core_ID = core_ID;
 	}
 
-	if (pread(fd, &data, sizeof data, reg) != sizeof data) {
+	if (pread(fd, &data, sizeof(data), reg) != sizeof(data)) {
 		if (errno == EIO) {
 			fprintf(stderr, "rdmsr: CPU %d cannot read MSR 0x%08" PRIx32 "\n", core_ID, reg);
 			exit(4);
 		} else {
 			perror("rdmsr: pread");
 			exit(127);
-		}
+		} 
 	}
 
 	return data;
