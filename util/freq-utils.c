@@ -13,6 +13,8 @@ uint32_t get_frequency(int core_ID) {
     #endif
 
     #ifdef ARCH_UNIVERSAL
+
     return get_frequency_common(core_ID);
     #endif
 }
+

@@ -55,6 +55,6 @@ typedef struct sample_deltas{
 void init_unit_data(unit_data *data);
 sample_deltas *sample(unit_data *unit_data, int time_ms);
 uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id);
-float get_frequency(CFDictionaryRef cpu_delta, int core_id);
-float get_power(CFDictionaryRef pwr_delta, int core_id);
+float get_frequency_apple(CFDictionaryRef cpu_delta, int core_id);
+float get_power_apple(CFDictionaryRef pwr_delta, int core_id);
 #endif

@@ -1,5 +1,5 @@
 #include <sys/resource.h>
-
+#include <string.h>
 #include "../util/freq-utils.h"
 #include "../util/power-utils.h"
 #include "../util/util.h"
@@ -95,17 +95,12 @@ int main(int argc, char *argv[])
 
 	// Read the selectors file line by line
 	int num_selectors = 0;
-	char *selectors[100];
-	size_t len = 0;
-	ssize_t read = 0;
-	char *line = NULL;
-	while ((read = getline(&line, &len, selectors_file)) != -1) {
-		if (line[read - 1] == '\n')
-			line[--read] = '\0';
-
+	int selectors[100];
+	char line[1024];
+	while (fgets(line, sizeof(line), selectors_file) != NULL){
 		// Read selector
-		selectors[num_selectors] = strdup(line);
-		num_selectors += 1;
+		sscanf(line, "%d", &(selectors[num_selectors]));
+		num_selectors++;
 	}
 
 	// Set the scheduling priority to high to avoid interruptions

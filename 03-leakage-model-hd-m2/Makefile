@@ -1,5 +1,5 @@
 CC:= gcc
-CFLAGS:= -O3 -D_POSIX_SOURCE -D_GNU_SOURCE -m64 -falign-functions=64 -Wall -g -arch arm64
+CFLAGS:= -O3 -D_POSIX_SOURCE -D_GNU_SOURCE -m64 -falign-functions=64 -Wall -g 
 LIBS:= -lpthread -lm
 FRAMEWORKS:= -lIOReport -framework IOKit -framework CoreFoundation -framework SystemConfiguration
 UTILS:= ../util/util.o ../util/freq-utils-m.o

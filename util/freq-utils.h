@@ -12,6 +12,10 @@
 #include "./common/freq-utils-common.h"
 #endif
 
+#ifdef ARCH_ARM64
+#include "./apple/freq-utils-m.h"
+#endif
+
 void freq_init(int core_ID);
 uint32_t get_frequency(int core_ID);
 

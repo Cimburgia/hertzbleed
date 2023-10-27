@@ -91,7 +91,7 @@ uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id){
  * ECPU Core 0-3 (2-5)
  * PCPU Core 0-3 (6-7)
 */
-float get_power(CFDictionaryRef pwr_delta, int core_id){
+float get_power_apple(CFDictionaryRef pwr_delta, int core_id){
     __block float pwr = 0;
     // Get number of indicies 8 or 18 depending on E vs. P
     IOReportIterate(pwr_delta, ^int(IOReportSampleRef sample) {
@@ -111,7 +111,7 @@ float get_power(CFDictionaryRef pwr_delta, int core_id){
     return pwr;
 }
 
-float get_frequency(CFDictionaryRef cpu_delta, int core_id){
+float get_frequency_apple(CFDictionaryRef cpu_delta, int core_id){
     // Get table nums
     int num_idxs = 7;
     int table_idx = 0;
