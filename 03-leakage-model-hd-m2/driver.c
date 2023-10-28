@@ -3,7 +3,7 @@
 #include <sys/wait.h>
 
 #include "../util/util.h"
-#include "../util/freq-utils-m.h"
+#include "../util/freq-utils.h"
 
 volatile static int attacker_core_ID;
 
@@ -90,16 +90,8 @@ static __attribute__((noinline)) void *monitor(void *in){
 	// Collect measurements
 	for (uint64_t i = 0; i < arg->iters; i++) {
 		// Collect samples and wait between each
-		sample_deltas *deltas = sample(arg->unit, 1);
-		float freqE = get_frequency(deltas->cpu_delta, 0);
-		float freqP = get_frequency(deltas->cpu_delta, 1);
-		float pwrE = get_power(deltas->pwr_delta, 0);
-		float pwrP = get_power(deltas->pwr_delta, 1);
-		
-		fprintf(output_file, "%f %f %f %f" PRIu32 "\n", pwrE, pwrP, freqE, freqP);
-		CFRelease(deltas->cpu_delta);
-		CFRelease(deltas->pwr_delta);
-		free(deltas);
+		float freq = get_frequency(0);
+		fprintf(output_file, "%f" PRIu32 "\n", freq);
 	}
 	// Clean up
 	fclose(output_file);

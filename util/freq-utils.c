@@ -13,8 +13,16 @@ uint32_t get_frequency(int core_ID) {
     #endif
 
     #ifdef ARCH_UNIVERSAL
-
     return get_frequency_common(core_ID);
+    #endif
+
+    #ifdef ARCH_ARM64
+        sample_deltas *deltas = sample(arg->unit, 0);
+		float freq = get_frequency_apple(deltas->cpu_delta, core_ID);
+		CFRelease(deltas->cpu_delta);
+		CFRelease(deltas->pwr_delta);
+		free(deltas);    
+        return freq;
     #endif
 }
 

@@ -1,8 +1,8 @@
 CC:= gcc
-CFLAGS:= -O3 -D_POSIX_SOURCE -D_GNU_SOURCE -m64 -falign-functions=64 -Wall -g 
+CFLAGS:= -O3 -D_POSIX_SOURCE -D_GNU_SOURCE -DARCH_ARM64 -m64 -falign-functions=64 -Wall -g 
 LIBS:= -lpthread -lm
 FRAMEWORKS:= -lIOReport -framework IOKit -framework CoreFoundation -framework SystemConfiguration
-UTILS:= ../util/util.o ../util/freq-utils-m.o
+UTILS:= ../util/util.o ../util/freq-utils.o
 all: obj bin out data driver
 
 driver: obj/driver.o $(UTILS)
