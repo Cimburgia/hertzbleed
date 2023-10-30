@@ -4,30 +4,33 @@ static char *chann_array[] = {"ECPU","PCPU","ECPU0","ECPU1","ECPU2","ECPU3","PCP
 static float e_array[] = {600, 912, 1284, 1752, 2004, 2256, 2424};
 static float p_array[] = {660, 924, 1188, 1452, 1704, 1968, 2208, 2400, 2568, 2724, 2868, 2988, 3096, 3204, 3324, 3408, 3504};
 static float *freq_state_cores[] = {e_array, p_array};
+static unit_data *unit;
 
 /**
  * Initialize the channel subscriptions so we can continue to sample over them throughout the
  * experiments. 
 */
-void init_unit_data(unit_data *data){
+void init_unit_data(){
+    unit = malloc(sizeof(unit_data));
+
     //Initialize channels
-    data->cpu_chann = IOReportCopyChannelsInGroup(CFSTR("CPU Stats"), 0, 0, 0, 0);
-    data->energy_chann = IOReportCopyChannelsInGroup(CFSTR("Energy Model"), 0, 0, 0, 0);
+    unit->cpu_chann = IOReportCopyChannelsInGroup(CFSTR("CPU Stats"), 0, 0, 0, 0);
+    unit->energy_chann = IOReportCopyChannelsInGroup(CFSTR("Energy Model"), 0, 0, 0, 0);
 
     // Create subscription
-    data->cpu_sub  = IOReportCreateSubscription(NULL, data->cpu_chann, &data->cpu_sub_chann, 0, 0);
-    data->pwr_sub  = IOReportCreateSubscription(NULL, data->energy_chann, &data->pwr_sub_chann, 0, 0);
-    CFRelease(data->cpu_chann);
-    CFRelease(data->energy_chann);
+    unit->cpu_sub  = IOReportCreateSubscription(NULL, unit->cpu_chann, &unit->cpu_sub_chann, 0, 0);
+    unit->pwr_sub  = IOReportCreateSubscription(NULL, unit->energy_chann, &unit->pwr_sub_chann, 0, 0);
+    CFRelease(unit->cpu_chann);
+    CFRelease(unit->energy_chann);
 }
 
-sample_deltas *sample(unit_data *unit_data, int time_ms) {
+sample_deltas *sample(int time_ms) {
     long time_between_measurements = 275*1e-3;
-    CFDictionaryRef cpusamp_a  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
-    CFDictionaryRef pwrsamp_a  = IOReportCreateSamples(unit_data->pwr_sub, unit_data->pwr_sub_chann, NULL);
+    CFDictionaryRef cpusamp_a  = IOReportCreateSamples(unit->cpu_sub, unit->cpu_sub_chann, NULL);
+    CFDictionaryRef pwrsamp_a  = IOReportCreateSamples(unit->pwr_sub, unit->pwr_sub_chann, NULL);
     nanosleep((const struct timespec[]){{0, time_between_measurements}}, NULL);
-    CFDictionaryRef cpusamp_b  = IOReportCreateSamples(unit_data->cpu_sub, unit_data->cpu_sub_chann, NULL);
-    CFDictionaryRef pwrsamp_b  = IOReportCreateSamples(unit_data->pwr_sub, unit_data->pwr_sub_chann, NULL);
+    CFDictionaryRef cpusamp_b  = IOReportCreateSamples(unit->cpu_sub, unit->cpu_sub_chann, NULL);
+    CFDictionaryRef pwrsamp_b  = IOReportCreateSamples(unit->pwr_sub, unit->pwr_sub_chann, NULL);
   
     CFDictionaryRef cpu_delta  = IOReportCreateSamplesDelta(cpusamp_a, cpusamp_b, NULL);
     CFDictionaryRef pwr_delta  = IOReportCreateSamplesDelta(pwrsamp_a, pwrsamp_b, NULL);

@@ -22,7 +22,7 @@ echo "$1" > "$new_dir/log.txt"
 
 # Setup
 samples=2000	# 10 seconds
-outer=20
+outer=2
 num_thread=$TOTAL_LOGICAL_CORES
 echo "${num_thread} ${samples} ${outer}" >> "$new_dir/log.txt"
 
@@ -30,7 +30,7 @@ echo "${num_thread} ${samples} ${outer}" >> "$new_dir/log.txt"
 echo "This script will take about $((((10)*$outer*(16+56+48+32+16+56+48+32+16+16)/60+10)/60)) hours. Reduce 'outer' if you want a shorter run."
 
 ### Warm Up ###
-stress-ng -q --cpu $TOTAL_LOGICAL_CORES -t 10m
+#stress-ng -q --cpu $TOTAL_LOGICAL_CORES -t 10m
 
 sudo rm -rf out
 mkdir out
@@ -53,26 +53,26 @@ for selector in `seq 0 16`; do
 	echo $selector >> input.txt
 done
 
-echo "Starting experiment 2 at ${date} - BG work, matrix." >> "$new_dir/log.txt"
-stress-ng --cpu $TOTAL_LOGICAL_CORES --cpu-method matrixprod &
-BG_PID=$!
-sudo ./bin/driver ${num_thread} ${samples} ${outer} >> "$new_dir/log.txt"
-kill $BG_PID
+# echo "Starting experiment 2 at ${date} - BG work, matrix." >> "$new_dir/log.txt"
+# stress-ng --cpu $TOTAL_LOGICAL_CORES --cpu-method matrixprod &
+# BG_PID=$!
+# sudo ./bin/driver ${num_thread} ${samples} ${outer} >> "$new_dir/log.txt"
+# kill $BG_PID
 
-cp -r out $new_dir/out-bg-matrix-${date}
+# cp -r out $new_dir/out-bg-matrix-${date}
 
-sudo rm -rf out
-mkdir out
-sudo rm -rf input.txt
+# sudo rm -rf out
+# mkdir out
+# sudo rm -rf input.txt
 
-for selector in `seq 0 16`; do
-	echo $selector >> input.txt
-done
+# for selector in `seq 0 16`; do
+# 	echo $selector >> input.txt
+# done
 
-echo "Starting experiment 3 at ${date} - BG work, cpu." >> "$new_dir/log.txt"
-stress-ng -q --cpu $TOTAL_LOGICAL_CORES &
-BG_PID=$!
-sudo ./bin/driver ${num_thread} ${samples} ${outer} >> "$new_dir/log.txt"
-kill $BG_PID
+# echo "Starting experiment 3 at ${date} - BG work, cpu." >> "$new_dir/log.txt"
+# stress-ng -q --cpu $TOTAL_LOGICAL_CORES &
+# BG_PID=$!
+# sudo ./bin/driver ${num_thread} ${samples} ${outer} >> "$new_dir/log.txt"
+# kill $BG_PID
 
-cp -r out $new_dir/out-bg-cpu-${date}
+# cp -r out $new_dir/out-bg-cpu-${date}

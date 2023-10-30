@@ -14,7 +14,6 @@ volatile static int attacker_core_ID;
 struct args_t {
 	uint64_t iters;
 	int selector;
-	unit_data *unit;
 };
 
 // arch-specfic
@@ -140,9 +139,7 @@ int main(int argc, char *argv[]){
 	setpriority(PRIO_PROCESS, 0, -20);
 	// Prepare up monitor/attacker
 	attacker_core_ID = 0;
-	struct unit_data *unit = malloc(sizeof(unit_data));
-	init_unit_data(unit);
-	arg.unit = unit;
+	freq_init(0);
 
 	// Register SIGUSR1 as exit
 	signal(SIGUSR1, sigusr1);
