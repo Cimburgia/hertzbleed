@@ -14,14 +14,15 @@ endif
 
 
 # Compiler Flags
-CC:= gcc
-LIBS:= -lpthread -lm -lc -lrt 
-UTILS:= ../util/util.o ../util/power-utils.o ../util/freq-utils.o \
+CC := gcc
+LIBS := -lpthread -lm -lc -lrt 
+UTILS := ../util/util.o ../util/power-utils.o ../util/freq-utils.o \
 		../util/common/freq-utils-common.o ../util/common/power-utils-common.o \
 		../util/x86/freq-utils-x86.o ../util/x86/msr-utils.o ../util/x86/rapl-utils.o
 
 ifeq ($(CPU_MAN_STR), AuthenticAMD)
-	VENDOR = _AMD
+	VENDOR := _AMD
+
 else ifeq ($(findstring Apple, $(CPU_MAN_STR)), Apple)
 	VENDOR := _APPLE
 	ARCH := ARCH_ARM64_M
@@ -40,8 +41,8 @@ ifeq ($(ARCH), ARCH_X86)
 
 # Include Apple M-series object files
 else ifeq ($(ARCH), ARCH_X86)
-	LIBS:= -lpthread -lm -lc -lIOReport -framework IOKit -framework CoreFoundation -framework SystemConfiguration
-	UTILS:= ../util/util.o ../util/freq-utils-m.o
+	LIBS := -lpthread -lm -lc -lIOReport -framework IOKit -framework CoreFoundation -framework SystemConfiguration
+	UTILS := ../util/util.o ../util/freq-utils-m.o
 endif
 
 
