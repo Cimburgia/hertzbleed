@@ -42,14 +42,18 @@ unsigned int maximum_frequency;
  */
 int set_frequency_units(int core_ID)
 {
+	// MSRs are different on AMD and Intel, so translate accordingly
+	
 	#ifdef _INTEL
 	maximum_frequency = ((my_rdmsr_on_cpu(core_ID, MSR_PLATFORM_INFO) >> 8) & 0xFF) * 100000;
 	#endif
+
+	// NOTE: This is a relatively inaccurate measurement that completely ignores
+	// 		 any decimal modifiers to frequency. 
 	#ifdef _AMD
-	maximum_frequency = ((my_rdmsr_on_cpu(core_ID, MSR_PLATFORM_INFO) >> 32) & 0xFF) * 100000;
+	maximum_frequency = ((my_rdmsr_on_cpu(core_ID, MSR_PLATFORM_INFO) >> 32) & 0xFF) * 1000000;
 	#endif
 
-	printf("Maximum frequency %ld\n", my_rdmsr_on_cpu(core_ID, MSR_PLATFORM_INFO) >> 32);
 	return 0;
 }
 

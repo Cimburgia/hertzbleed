@@ -15,7 +15,7 @@ static void stress(void *command)
 
 struct args_t {
 	uint64_t iters;
-	int selector;
+	char* selector;
 };
 
 // Collects traces
@@ -30,9 +30,9 @@ static __attribute__((noinline)) int monitor(void *in)
 
 	// Set filename
 	char energy_filename[64];
-	sprintf(energy_filename, "./out/energy_%d_%06d.out", arg->selector, rept_index);
+	sprintf(energy_filename, "./out/energy_%s_%06d.out", arg->selector, rept_index);
 	char freq_filename[64];
-	sprintf(freq_filename, "./out/freq_%d_%06d.out", arg->selector, rept_index);
+	sprintf(freq_filename, "./out/freq_%s_%06d.out", arg->selector, rept_index);
 	rept_index += 1;
 
 	// Prepare output file
@@ -55,7 +55,7 @@ static __attribute__((noinline)) int monitor(void *in)
 		fprintf(freq_file, "%" PRIu32 "\n", get_frequency(attacker_core_ID));
 		
 		energy = get_pkg_energy(attacker_core_ID);
-		fprintf(energy_file, "%.15f\n", energy - prev_energy);
+		fprintf(energy_file, "%.15f\n", energy);
 		prev_energy = energy;
 	}
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 	// Read the selectors file line by line
 	int num_selectors = 0;
 	char* selectors[100];
-	char* line[1024];
+	char line[1024];
 
 	while (fgets(line, sizeof(line), selectors_file) != NULL){
 		// Read selector
