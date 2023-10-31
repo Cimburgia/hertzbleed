@@ -24,7 +24,7 @@ ifeq ($(CPU_MAN_STR), AuthenticAMD)
 	VENDOR = _AMD
 else ifeq ($(findstring Apple, $(CPU_MAN_STR)), Apple)
 	VENDOR := _APPLE
-	ARCH := ARCH_ARM64
+	ARCH := ARCH_ARM64_M
 	LIBS:= -lpthread -lm -lc -lIOReport -framework IOKit -framework CoreFoundation -framework SystemConfiguration
 	UTILS:= ../util/util.o ../util/freq-utils.o \
 			../util/apple/freq-utils-m.o

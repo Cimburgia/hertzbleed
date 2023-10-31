@@ -12,7 +12,7 @@
 #include "./common/freq-utils-common.h"
 #endif
 
-#ifdef ARCH_ARM64
+#ifdef ARCH_ARM64_M
 #include "./apple/freq-utils-m.h"
 #endif
 

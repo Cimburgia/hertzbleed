@@ -6,7 +6,7 @@ void freq_init(int core_ID) {
     set_frequency_units(core_ID);
     #endif
 
-    #ifdef ARCH_ARM64
+    #ifdef ARCH_ARM64_M
     init_unit_data();
     #endif
 }
@@ -20,7 +20,7 @@ uint32_t get_frequency(int core_ID) {
     return get_frequency_common(core_ID);
     #endif
 
-    #ifdef ARCH_ARM64
+    #ifdef ARCH_ARM64_M
     sample_deltas *deltas = sample(0);
     float freq = get_frequency_apple(deltas->cpu_delta, core_ID);
     CFRelease(deltas->cpu_delta);
