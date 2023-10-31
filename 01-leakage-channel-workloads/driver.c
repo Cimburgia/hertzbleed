@@ -55,7 +55,7 @@ static __attribute__((noinline)) int monitor(void *in)
 		fprintf(freq_file, "%" PRIu32 "\n", get_frequency(attacker_core_ID));
 		
 		energy = get_pkg_energy(attacker_core_ID);
-		fprintf(energy_file, "%.15f\n", energy);
+		fprintf(energy_file, "%lf\n", energy - prev_energy);
 		prev_energy = energy;
 	}
 
