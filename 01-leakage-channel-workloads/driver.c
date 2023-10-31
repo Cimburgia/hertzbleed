@@ -1,4 +1,5 @@
 #include <sys/resource.h>
+#include <stdlib.h>
 #include <string.h>
 #include "../util/freq-utils.h"
 #include "../util/power-utils.h"
@@ -95,12 +96,14 @@ int main(int argc, char *argv[])
 
 	// Read the selectors file line by line
 	int num_selectors = 0;
-	int selectors[100];
-	char line[1024];
+	char* selectors[100];
+	char* line[1024];
+
 	while (fgets(line, sizeof(line), selectors_file) != NULL){
 		// Read selector
-		sscanf(line, "%d", &(selectors[num_selectors]));
-		num_selectors++;
+		char* tmp = malloc(1024);
+		strncpy(tmp, line, 1024);
+		selectors[num_selectors++] = tmp;
 	}
 
 	// Set the scheduling priority to high to avoid interruptions
@@ -127,7 +130,7 @@ int main(int argc, char *argv[])
 		// Prepare background stress command
 		char cpu_mask[16], command[256];
 		sprintf(cpu_mask, "0-%d", ntasks - 1);
-		sprintf(command, "taskset -c %s stress-ng -q --cpu %d --cpu-method %d -t 10m", cpu_mask, ntasks, selectors[i % num_selectors]);
+		sprintf(command, "taskset -c %s stress-ng -q --cpu %d --cpu-method %s -t 10m", cpu_mask, ntasks, selectors[i % num_selectors]);
 		printf("Running: %s\n", command);
 
 		// Cool down
