@@ -28,6 +28,9 @@ else ifeq ($(findstring Apple, $(CPU_MAN_STR)), Apple)
 	ARCH := ARCH_ARM64_M
 endif
 
+# Common Arch should work on all linux devices
+#ARCH := ARCH_COMMON
+
 # Assign Include Files depending on the cpu vendor / architecture
 
 # Include x86 object files
