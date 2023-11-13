@@ -43,8 +43,9 @@ typedef struct unit_data{
 } unit_data;
 
 typedef struct cpu_freq_data{
-    uint64_t *residencies;
-    uint64_t frequency;
+    CFStringRef *core_labels;
+    uint64_t **residencies;
+    uint64_t *frequencies;
 } cpu_freq_data;
 
 typedef struct sample_deltas{
@@ -53,8 +54,9 @@ typedef struct sample_deltas{
 } sample_deltas;
 
 void init_unit_data();
-sample_deltas *sample(int time_ms);
-uint64_t *get_state_res(CFDictionaryRef cpu_delta, int core_id);
-float get_frequency_apple(CFDictionaryRef cpu_delta, int core_id);
+sample_deltas *sample();
+void get_state_residencies(CFDictionaryRef cpu_delta, cpu_freq_data *data);
+cpu_freq_data *get_frequency_apple(CFDictionaryRef cpu_delta);
 float get_power_apple(CFDictionaryRef pwr_delta, int core_id);
+int get_core_num();
 #endif
