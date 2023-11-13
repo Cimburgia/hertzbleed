@@ -44,6 +44,7 @@ typedef struct unit_data{
 
 typedef struct cpu_freq_data{
     CFStringRef *core_labels;
+    uint64_t *num_dvfs_states;
     uint64_t **residencies;
     uint64_t *frequencies;
 } cpu_freq_data;

@@ -68,6 +68,7 @@ void get_state_residencies(CFDictionaryRef cpu_delta, cpu_freq_data *data){
                 // Only save the CPU-specific samples
                 if (CFStringFind(chann_name, CFSTR("CPU"), 0).location != kCFNotFound){
                     data->core_labels[i] = chann_name;
+                    data->num_dvfs_states[i] = IOReportStateGetCount(sample);
                     data->residencies[i] = malloc(IOReportStateGetCount(sample)*sizeof(uint64_t));
                     // Indicies represent samples for each DVFS state
                     int ii = 0;
@@ -124,23 +125,36 @@ cpu_freq_data *get_frequency_apple(CFDictionaryRef cpu_delta){
     data->core_labels = malloc(num_cores * sizeof(CFStringRef));
     data->frequencies = malloc(num_cores * sizeof(uint64_t));
     data->residencies = malloc(num_cores * sizeof(uint64_t*));
+    data->num_dvfs_states = malloc(num_cores * sizeof(uint64_t));
 
     // Take sample and fill in residency table
     get_state_residencies(cpu_delta, data);
     
     uint64_t sum = 0;
     float freq = 0;
-    // Get total residency values
-    // for (int i = 0; i < num_idxs; i++){
-    //     sum += residencies[i];
-    // }
-    // Take average
-    // for (int i = 0; i < num_idxs; i++){
-    //     float percent = (float)residencies[i]/sum;
-    //     freq += (percent*freq_state_cores[table_idx][i]);
-    // }
-    // convert to Hz and return
-    //free(residencies);
+
+    for (int i = 0; i < num_cores; i++){
+        // Sum all 
+        uint64_t num_states = data->num_dvfs_states[i];
+        uint64_t sum = 0;
+        float freq = 0;
+        // Hardcoded, change soon
+        int table_idx = 1;
+        if (num_states < 10){
+            table_idx = 0;
+        }
+        for (int ii = 0; ii < num_states; ii++){
+            sum += data->residencies[i][ii];
+            //printf("%lld\n", sum);
+        }
+        // Take average
+        for (int ii = 0; ii < num_states; ii++){
+            float percent = (float)data->residencies[i][ii]/sum;
+            freq += (percent*freq_state_cores[table_idx][ii]);
+        }
+        // Save to data struct
+        data->frequencies[i] = freq;
+    }
     return data;
 }
 
@@ -152,6 +166,7 @@ int get_core_num(){
     fgets(result, sizeof(result) - 1, fp);
     pclose(fp);
     int num_cores = atoi(result);
+    // Add two extra for complexes
     return num_cores + 2;
 }
 
@@ -162,9 +177,9 @@ int main(int argc, char* argv[]) {
     init_unit_data();
     sample_deltas *deltas = sample();
     cpu_freq_data *data = get_frequency_apple(deltas->cpu_delta);
-
     for(int i = 0; i<num_cores; i++){
-        CFShow(data->core_labels[i]);
-        printf("%lld\n", data->residencies[i][0]);
+        //CFShow(data->core_labels[i]);
+        //printf("%lld\n", data->residencies[i][0]);
+        printf("%lld\n", data->frequencies[i]);
     }
 }
